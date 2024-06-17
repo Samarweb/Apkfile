@@ -41,6 +41,13 @@ jobs:
       env:
         ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
 
+    - name: Install Java dependencies
+      run: |
+        sudo apt-get install -y maven
+        mvn dependency:get -Dartifact=javax.xml.bind:jaxb-api:2.3.1
+        mvn dependency:get -Dartifact=com.sun.xml.bind:jaxb-core:2.3.0.1
+        mvn dependency:get -Dartifact=com.sun.xml.bind:jaxb-impl:2.3.2
+
     - name: Build the APK
       run: |
         export ANDROID_SDK_ROOT=${{ github.workspace }}/android-sdk
