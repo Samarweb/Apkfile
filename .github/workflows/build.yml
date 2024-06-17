@@ -1,0 +1,57 @@
+name: Build APK
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python environment
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y python3-pip python3-dev build-essential git
+        sudo apt install -y libffi-dev libssl-dev
+        sudo apt install -y libltdl-dev libtool autoconf automake
+        sudo apt install -y zlib1g-dev
+        pip install --upgrade cython
+        pip install buildozer
+
+    - name: Install Android SDK and NDK
+      run: |
+        sudo apt-get install -y openjdk-8-jdk wget unzip
+        wget https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip
+        unzip sdk-tools-linux-4333796.zip -d $HOME/android-sdk
+        yes | $HOME/android-sdk/tools/bin/sdkmanager --sdk_root=$HOME/android-sdk "platform-tools" "platforms;android-29" "build-tools;29.0.2" "ndk;21.1.6352462"
+        yes | $HOME/android-sdk/tools/bin/sdkmanager --licenses
+      env:
+        ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
+
+    - name: Build the APK
+      run: |
+        export ANDROID_SDK_ROOT=${{ github.workspace }}/android-sdk
+        buildozer android debug
+      env:
+        ANDROID_NDK: ${{ github.workspace }}/android-sdk/ndk/21.1.6352462
+        ANDROID_NDK_HOME: ${{ github.workspace }}/android-sdk/ndk/21.1.6352462
+        ANDROID_HOME: ${{ github.workspace }}/android-sdk
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v2
+      with:
+        name: apk
+        path: bin/*.apk
